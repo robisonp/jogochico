@@ -1,6 +1,6 @@
 // Service worker: guarda o jogo no tablet para funcionar sem internet.
 // Ao mudar qualquer arquivo, aumente a versão abaixo.
-const VERSAO = 'chico-v3';
+const VERSAO = 'chico-v4';
 const ARQUIVOS = [
   './', 'index.html', 'manifest.webmanifest',
   'src/dados.js', 'src/audio.js', 'src/graficos.js', 'src/gravacoes.js', 'src/jogo.js',
@@ -17,18 +17,21 @@ self.addEventListener('activate', e => {
     .then(() => self.clients.claim()));
 });
 
-// Arquivos do jogo e a fonte: responde do cache e atualiza em segundo plano.
+// Com internet busca a versão nova; sem internet usa a cópia guardada.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   const fonte = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
   if (url.origin !== location.origin && !fonte) return;
   e.respondWith(caches.open(VERSAO).then(async cache => {
-    const salvo = await cache.match(e.request, { ignoreSearch: true });
-    const rede = fetch(e.request).then(r => {
+    try {
+      const r = await fetch(e.request, { cache: 'no-cache' });
       if (r && (r.ok || r.type === 'opaque')) cache.put(e.request, r.clone());
       return r;
-    }).catch(() => salvo);
-    return salvo || rede;
+    } catch (err) {
+      const salvo = await cache.match(e.request, { ignoreSearch: true });
+      if (salvo) return salvo;
+      throw err;
+    }
   }));
 });

@@ -290,6 +290,8 @@ function CenaMapa() {
   const posHeroi = id => { const [x, y] = pos(id); return [x - TW / 2 - 7, y + TH / 2]; };
   let [hx, hy] = posHeroi(Save.d.ultimoNo in NOS_MAPA ? Save.d.ultimoNo : 'savana');
   let alvo = null, tremer = { id: null, t: 0 };
+  // 5 toques seguidos no rosto do Tio Robi abrem a tela de gravação (adultos)
+  const toquesRobi = { n: 0, t: 0 };
 
   function escolher(id) {
     if (alvo) return;
@@ -311,6 +313,11 @@ function CenaMapa() {
     atualizar() {
       t++;
       if (tremer.t > 0) tremer.t--;
+      // parou de tocar antes do 5º toque: só repete a explicação
+      if (toquesRobi.n > 0 && t - toquesRobi.t > 40) {
+        toquesRobi.n = 0;
+        irPara(CenaTioRobi);
+      }
       if (alvo) {
         alvo.t++;
         const k = Math.min(1, alvo.t / 40);
@@ -384,8 +391,12 @@ function CenaMapa() {
       botaoAtivo(g, 4, 4, 28, 22, '🏠', '#8a5a32', () => irPara(CenaTitulo));
       botao(g, 36, 4, 28, 22, null, '#3a6ab0');
       desenharSprite(g, SPR.robi.rosto, 50, 22, {});
-      // toque: Tio Robi explica de novo. Segurar 2 s: tela de gravação (adultos)
-      J.botoes.push({ x: 36, y: 4, w: 28, h: 22, acao: seg => (seg >= 1.5 ? Gravador.abrir() : irPara(CenaTioRobi)) });
+      // 1 toque: Tio Robi explica de novo. 5 toques seguidos: tela de gravação
+      J.botoes.push({ x: 36, y: 4, w: 28, h: 22, acao: () => {
+        toquesRobi.n++; toquesRobi.t = t;
+        if (toquesRobi.n >= 5) { toquesRobi.n = 0; Gravador.abrir(); }
+      } });
+      for (let k = 0; k < toquesRobi.n; k++) { g.fillStyle = '#ffd83a'; g.fillRect(38 + k * 5, 28, 3, 3); }
       botaoAtivo(g, W - 64, 4, 28, 22, '📖', '#c0504a', () => irPara(CenaAlbum));
       botaoAtivo(g, W - 32, 4, 28, 22, Som.musicaLigada ? '🎵' : '🔇', '#6a4ab0', () => {
         Som.setMusicaLigada(!Som.musicaLigada); Save.d.musica = Som.musicaLigada; Save.salvar();
@@ -1097,7 +1108,7 @@ function configurarToque() {
     try { c.setPointerCapture(e.pointerId); } catch (_) { /* ok */ }
     // botões agem ao soltar o dedo; aqui só guardamos qual foi apertado
     for (let i = J.botoes.length - 1; i >= 0; i--) {
-      if (dentro(J.botoes[i], x, y)) { J.apertado = Object.assign({ id: e.pointerId, t0: performance.now() }, J.botoes[i]); return; }
+      if (dentro(J.botoes[i], x, y)) { J.apertado = Object.assign({ id: e.pointerId }, J.botoes[i]); return; }
     }
     if (J.pausado || !J.cena) return;
     // o pulo responde já no encostar do dedo
@@ -1115,7 +1126,7 @@ function configurarToque() {
       J.apertado = null;
       if (!cancelado && !J.transicao && dentro(b, x, y)) {
         Som.iniciar(); Som.tocar('clique');
-        b.acao((performance.now() - b.t0) / 1000); // segundos que o dedo ficou apertado
+        b.acao();
       }
       Voz.desbloquear();
       return;
