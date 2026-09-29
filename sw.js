@@ -1,6 +1,6 @@
 // Service worker: guarda o jogo no tablet para funcionar sem internet.
 // Ao mudar qualquer arquivo, aumente a versão abaixo.
-const VERSAO = 'safari-v1';
+const VERSAO = 'chico-v2';
 const ARQUIVOS = [
   './', 'index.html', 'manifest.webmanifest',
   'src/dados.js', 'src/audio.js', 'src/graficos.js', 'src/jogo.js',

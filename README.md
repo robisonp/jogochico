@@ -1,6 +1,6 @@
-# 🦁 Safari do Chico
+# 🦁 Chico ajuda os animais
 
-Jogo com cara de Super Nintendo sobre **animais e os ambientes onde eles vivem** (savana, floresta, deserto, gelo e oceano), feito para uma criança de 5 anos que **ainda não sabe ler**: tudo é narrado por voz em português, com ícones grandes e sem "game over".
+Jogo com cara de Super Nintendo sobre **animais e os ambientes onde eles vivem** (savana, floresta, deserto, gelo e oceano), feito para uma criança de 5 anos que **ainda não sabe ler**: tudo é narrado por voz em português pelo **Tio Robi**, com ícones grandes e sem "game over".
 
 Roda no navegador do tablet (iPad ou Android), pode ser instalado na tela inicial como app e funciona sem internet depois da primeira abertura.
 
@@ -14,6 +14,8 @@ Roda no navegador do tablet (iPad ou Android), pode ser instalado na tela inicia
 | **Álbum de Figurinhas** 📖 | Cada bicho salvo vira figurinha colorida; os que faltam aparecem como sombra. Tocar faz a voz dizer o nome e onde mora. | Revisar e colecionar |
 
 Outros detalhes pensados para a idade:
+
+- **Tio Robi explica o jogo**: na primeira vez, depois da tela inicial, o Tio Robi aparece e explica com figuras ("você tem que pegar os animais de cada ambiente; se o bicho não mora ali, pule por cima"). O botão com o rosto dele no mapa repete a explicação.
 
 - **Tutorial sem texto**: na primeira fase o jogo desacelera, mostra uma mãozinha 👆 e a voz explica o que fazer.
 - **Errar ensina**: ao pegar um bicho perdido, aparece um quadro "🐧 ➜ paisagem do gelo" e a voz diz *"Ops! O pinguim mora no gelo."*
@@ -41,7 +43,11 @@ Depois disso ele abre em tela cheia, deitado, como um app, e funciona offline.
 - **iPad**: Ajustes → Acessibilidade → **Acesso Guiado**. Abra o jogo e clique 3× no botão lateral para travar.
 - **Android**: Configurações → Segurança → **Fixar app** (Screen pinning).
 
-> Dica: confira se o tablet tem uma voz em português instalada (iPad: Ajustes → Acessibilidade → Conteúdo Falado → Vozes → Português (Brasil)). É ela que narra o jogo.
+> **Voz do Tio Robi**: o jogo procura uma voz masculina em português no tablet; se só achar voz feminina, deixa o tom mais grave. Para ficar com voz de homem de verdade, instale uma:
+> - **iPad**: Ajustes → Acessibilidade → Conteúdo Falado → Vozes → Português (Brasil) → baixe uma voz masculina, se aparecer na lista.
+> - **Android**: Configurações → Acessibilidade → Saída de conversão de texto em voz → Mecanismo do Google → Português (Brasil) → escolha uma das vozes masculinas.
+>
+> A voz só começa a funcionar depois do primeiro toque na tela: é uma regra do navegador.
 
 ## Testar no computador
 
@@ -58,6 +64,7 @@ Abra `http://localhost:8080`. No computador, **espaço** ou **seta para cima** t
 Tudo que muda o conteúdo está em [`src/dados.js`](src/dados.js):
 
 - `NOME_HEROI`: nome que aparece no título e nas falas.
+- As falas do Tio Robi na abertura ficam em `CenaTioRobi`, em [`src/jogo.js`](src/jogo.js); o visual dele (pixel art e cores) fica em `ROBI` e `PAL_ROBI`, em [`src/graficos.js`](src/graficos.js).
 - `TODOS_ANIMAIS`: lista de bichos. Para adicionar um, copie uma linha e troque emoji, nome, artigo (`o`/`a`) e ambiente.
 - `BIOMAS`: ambientes e como a voz fala deles ("na savana", "no deserto"…).
 
@@ -74,13 +81,15 @@ sw.js                 cache para funcionar offline
 src/dados.js          ambientes, animais e nome do herói
 src/audio.js          músicas chiptune, efeitos e narração por voz
 src/graficos.js       pixel art, cenários com parallax, botões
-src/jogo.js           loop, toque, cenas (título, mapa, fases, chuva, álbum)
+src/jogo.js           loop, toque, cenas (título, Tio Robi, mapa, fases, chuva, álbum)
 icons/                ícones do app
 ```
 
 Sem dependências e sem etapa de build: é HTML, Canvas e JavaScript puro.
 
 ## Ideias para próximas versões
+
+- **Voz gravada do Tio Robi**: trocar a voz sintetizada por gravações de verdade das falas.
 
 - **Exploração estilo Zelda**: andar pela ilha e encontrar bichos perdidos que pedem ajuda para voltar para casa.
 - **"Quem sou eu?"**: a voz dá pistas ("tenho pescoço comprido e moro na savana") e ele escolhe o bicho.

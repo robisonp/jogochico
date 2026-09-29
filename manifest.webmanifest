@@ -1,6 +1,6 @@
 {
-  "name": "Safari do Chico",
-  "short_name": "Safari",
+  "name": "Chico ajuda os animais",
+  "short_name": "Chico",
   "description": "Jogo de animais e seus ambientes, estilo Super Nintendo.",
   "lang": "pt-BR",
   "start_url": "./",

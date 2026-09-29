@@ -160,7 +160,7 @@ function desenharSprite(g, spr, x, y, o = {}) {
 }
 
 const PAL_HEROI = {
-  k: '#2a1a12', h: '#e8c46a', H: '#9a6a32', s: '#f5c7a1', r: '#f08a8a', e: '#1b1b1b',
+  k: '#2a1a12', h: '#e8c46a', H: '#9a6a32', s: '#dcaa80', r: '#d98a6e', e: '#1b1b1b',
   c: '#3f9b4f', C: '#2d7a3b', p: '#8a5a32', b: '#5a3a22', w: '#ffffff',
 };
 const HEROI_CORPO = [
@@ -179,6 +179,44 @@ const HEROI_CORPO = [
   '..kcccccck...',
   '..kppppppk...',
 ];
+// Tio Robi: adulto, barba curta, camisa azul de explorador
+const PAL_ROBI = {
+  k: '#2a1a12', h: '#d8b060', H: '#7a5028', s: '#dcaa80', c: '#4a3020', e: '#1b1b1b',
+  M: '#8a4a3a', O: '#3a0a0a', w: '#f4f0e0', b: '#3a6ab0', B: '#2a4f88', g: '#3a2a1a',
+  p: '#6a5a40', o: '#4a3020',
+};
+const ROBI = [
+  '.....kkkkkk.....',
+  '....khhhhhhk....',
+  '...khhhhhhhhk...',
+  '...kHHHHHHHHk...',
+  '.kkkkkkkkkkkkkk.',
+  '...kcssssssk....',
+  '...kcssssesk....',
+  '...kcsssssssk...',
+  '...kccsssssk....',
+  '...kcccMMcck....',
+  '....kcccccck....',
+  '....kbbwwbbk....',
+  '...kbbbbbbbbk...',
+  '..kbbbbbbbbbbk..',
+  '.kbkbbbbbbbbkbk.',
+  '.kbkbbbBbbbbkbk.',
+  '.kbkbbbbbbbbkbk.',
+  '.kskggggggggksk.',
+  '..kkppppppppkk..',
+  '....kppppppk....',
+  '....kppkkppk....',
+  '....kppkkppk....',
+  '....kppkkppk....',
+  '...kooook.koook.',
+  '...kkkkkk.kkkkk.',
+];
+function trocar(linhas, mudancas) {
+  const r = linhas.map(l => l.split(''));
+  for (const [x, y, ch] of mudancas) r[y][x] = ch;
+  return r.map(l => l.join(''));
+}
 const SPR = {};
 function prepararSprites() {
   const perna = (a, b) => criarSprite(HEROI_CORPO.concat([a, b]), PAL_HEROI);
@@ -190,6 +228,19 @@ function prepararSprites() {
   SPR.parado = perna('..kpk..kpk...', '..kbbk.kbbk..');
   SPR.tonto = criarSprite(HEROI_CORPO.map(l => l.replace('kssssesk', 'ksxsxsxk'))
     .concat(['..kpk..kpk...', '.kbbk..kbbk..']), Object.assign({ x: '#1b1b1b' }, PAL_HEROI));
+
+  const boca = [[7, 9, 'O'], [8, 9, 'O'], [7, 10, 'O'], [8, 10, 'O']];
+  const acenar = [];
+  for (let y = 14; y <= 17; y++) acenar.push([13, y, '.'], [14, y, '.']);
+  for (let y = 9; y <= 13; y++) acenar.push([13, y, 'k'], [14, y, 'b'], [15, y, 'k']);
+  acenar.push([13, 7, 'k'], [14, 7, 's'], [15, 7, 'k'], [13, 8, 'k'], [14, 8, 's'], [15, 8, 'k'], [14, 6, 'k']);
+  SPR.robi = {
+    parado: criarSprite(ROBI, PAL_ROBI),
+    falando: criarSprite(trocar(ROBI, boca), PAL_ROBI),
+    acenando: criarSprite(trocar(ROBI, acenar), PAL_ROBI),
+    acenandoFalando: criarSprite(trocar(ROBI, acenar.concat(boca)), PAL_ROBI),
+    rosto: criarSprite(ROBI.slice(0, 11), PAL_ROBI),
+  };
 
   SPR.sub = [0, 1].map(f => criarSprite([
     '...........kkk......',
@@ -203,7 +254,7 @@ function prepararSprites() {
     '..kyyYyyYyyykwwwwwk.',
     '...kYYYYYYYYYkkkkk..',
     '....kkkkkkkkkkkkk...',
-  ], { k: '#2a1a12', y: '#f2c230', Y: '#c8961c', w: '#bfe8ff', h: '#e8c46a', s: '#f5c7a1', e: '#1b1b1b', g: '#8a8a9a' }));
+  ], { k: '#2a1a12', y: '#f2c230', Y: '#c8961c', w: '#bfe8ff', h: '#e8c46a', s: '#dcaa80', e: '#1b1b1b', g: '#8a8a9a' }));
 
   const pedra = [
     '....kkkkk.....',

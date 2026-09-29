@@ -194,35 +194,65 @@ const Som = (() => {
   };
 })();
 
+// Narrador: o Tio Robi. Tenta usar uma voz masculina em português;
+// se o aparelho só tiver voz feminina, deixa o tom mais grave.
 const Voz = (() => {
   const ok = 'speechSynthesis' in window;
-  let voz = null;
+  const MASCULINAS = /daniel|felipe|ricardo|ant[oô]nio|f[aá]bio|donato|j[uú]lio|humberto|val[eé]rio|nicolau|macerio|henrique|male|masculin|ptd|ptc/i;
+  let voz = null, masculina = false;
   function escolher() {
     if (!ok) return;
     const vs = speechSynthesis.getVoices();
-    voz = vs.find(v => /pt[-_]BR/i.test(v.lang) && /luciana|google|francisca|natural/i.test(v.name))
-       || vs.find(v => /pt[-_]BR/i.test(v.lang))
-       || vs.find(v => /^pt/i.test(v.lang)) || null;
+    const br = vs.filter(v => /pt[-_]BR/i.test(v.lang));
+    const pt = br.length ? br : vs.filter(v => /^pt/i.test(v.lang));
+    const homem = pt.find(v => MASCULINAS.test(v.name) || MASCULINAS.test(v.voiceURI || ''));
+    voz = homem || pt[0] || null;
+    masculina = !!homem;
   }
   if (ok) {
     escolher();
-    if ('onvoiceschanged' in speechSynthesis) speechSynthesis.onvoiceschanged = escolher;
+    if (speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', escolher);
+    else speechSynthesis.onvoiceschanged = escolher;
   }
-  let falando = 0;
+  let falando = 0, desbloqueada = false, silenciosa = null;
   return {
-    falar(texto, { interromper = true } = {}) {
-      if (!ok || !texto) return;
+    // aoTerminar só é chamado quando a fala termina normalmente
+    falar(texto, { interromper = true, aoTerminar = null } = {}) {
+      if (!ok || !texto) return false;
       try {
-        if (interromper) speechSynthesis.cancel();
+        if (!voz) escolher();
+        desbloqueada = true;
+        // não cancela a fala muda de desbloqueio (no Safari isso engole a fala nova)
+        if (interromper && !silenciosa && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(texto);
         u.lang = 'pt-BR';
         if (voz) u.voice = voz;
-        u.rate = 0.95; u.pitch = 1.15;
+        u.rate = 0.95;
+        u.pitch = masculina ? 0.95 : 0.7;
         u.onstart = () => { falando++; Som.abafar(true); };
-        u.onend = u.onerror = () => { falando = Math.max(0, falando - 1); if (!falando) Som.abafar(false); };
+        const fim = () => { falando = Math.max(0, falando - 1); if (!falando) Som.abafar(false); };
+        u.onend = () => { fim(); if (aoTerminar) aoTerminar(); };
+        u.onerror = fim;
         speechSynthesis.speak(u);
-      } catch (e) { /* sem voz neste aparelho */ }
+        return true;
+      } catch (e) { return false; /* sem voz neste aparelho */ }
+    },
+    // No iPad a voz só é liberada dentro de um toque: chamada no primeiro toque
+    desbloquear() {
+      if (!ok || desbloqueada) return;
+      desbloqueada = true;
+      try {
+        const u = new SpeechSynthesisUtterance(' ');
+        u.volume = 0;
+        u.lang = 'pt-BR';
+        silenciosa = u;
+        u.onend = u.onerror = () => { silenciosa = null; };
+        setTimeout(() => { silenciosa = null; }, 1500);
+        speechSynthesis.speak(u);
+      } catch (e) { /* ignora */ }
     },
     calar() { if (ok) speechSynthesis.cancel(); },
+    get masculina() { return masculina; },
+    get nomeVoz() { return voz ? voz.name : null; },
   };
 })();

@@ -118,25 +118,144 @@ function CenaTitulo() {
         const pulo = Math.abs(Math.sin((t + p.f * 10) / 8)) * 4;
         desenharEmoji(g, p.a.e, p.x, gy() - 10 - pulo, 18);
       }
-      // herói correndo
-      desenharSprite(g, SPR.correr[Math.floor(t / 6) % 2], W * 0.28, gy() + 1, { escala: 2 });
+      // Tio Robi acenando e o Chico correndo
+      desenharSprite(g, Math.floor(t / 20) % 2 ? SPR.robi.acenando : SPR.robi.parado, W * 0.14, gy() + 1, { escala: 2 });
+      desenharSprite(g, SPR.correr[Math.floor(t / 6) % 2], W * 0.3, gy() + 1, { escala: 2 });
       // logo
       const oy = Math.sin(t / 20) * 2;
-      texto(g, 'SAFARI', W / 2, 18 + oy, { tam: 24, cor: '#ffd83a', grosso: 2, sombra: true });
-      texto(g, 'DO ' + NOME_HEROI.toUpperCase(), W / 2, 48 + oy, { tam: 12, cor: '#ffffff', grosso: 2 });
-      desenharEmoji(g, '🦁', W / 2 - 108, 34 + oy, 20);
-      desenharEmoji(g, '🐧', W / 2 + 108, 34 + oy, 20, { virar: true });
+      texto(g, NOME_HEROI.toUpperCase() + ' AJUDA', W / 2, 14 + oy, { tam: 16, cor: '#ffd83a', grosso: 2, sombra: true });
+      texto(g, 'OS ANIMAIS', W / 2, 40 + oy, { tam: 16, cor: '#ffffff', grosso: 2, sombra: true });
+      desenharEmoji(g, '🦁', W / 2 - 128, 30 + oy, 20);
+      desenharEmoji(g, '🐧', W / 2 + 128, 30 + oy, 20, { virar: true });
       // botão jogar piscando
       const pulso = 1 + Math.sin(t / 8) * 0.06;
       const bw = 56 * pulso, bh = 34 * pulso;
       botaoAtivo(g, W / 2 - bw / 2, H * 0.47, bw, bh, '▶️', '#3aa655', () => comecar());
     },
-    toque() { comecar(); },
+    // age ao soltar o dedo: no iPad só assim a voz é liberada
+    soltar() { comecar(); },
   };
   function comecar() {
+    if (!Save.d.viuTioRobi) { irPara(CenaTioRobi); return; }
     Voz.falar(`Oi, ${NOME_HEROI}! Escolha um lugar para explorar!`);
     irPara(CenaMapa);
   }
+}
+
+// =====================================================================
+//  CENA: TIO ROBI EXPLICA O JOGO
+// =====================================================================
+function CenaTioRobi() {
+  const PASSOS = [
+    `Oi, ${NOME_HEROI}! Eu sou o Tio Robi!`,
+    'Os animais se perderam, e você vai me ajudar a levar cada um para casa!',
+    'Em cada ambiente, você tem que pegar os animais que moram lá.',
+    'Se o bicho não mora ali, pule por cima! Para pular, é só tocar na tela.',
+    'Vamos lá? Toque no botão verde!',
+  ];
+  let t = 0, passo = -1, tPasso = 0, falando = false, espera = 0, token = 0, lembrou = false;
+  const perdidos = ['🦁', '🐧', '🐒', '🐬', '🐫'];
+
+  function irPasso(n) {
+    passo = n; tPasso = 0; falando = true; espera = 0;
+    const meu = ++token;
+    const texto = PASSOS[n];
+    const teveVoz = Voz.falar(texto, { aoTerminar: () => { if (meu === token) terminouFala(); } });
+    // reserva: se a voz não avisar que terminou, segue sozinho
+    espera = (teveVoz ? texto.length * 6 + 90 : texto.length * 4 + 40);
+  }
+  function terminouFala() {
+    if (!falando) return;
+    falando = false;
+    espera = 35; // respiro antes do próximo passo
+  }
+  function sair() {
+    Save.d.viuTioRobi = true; Save.salvar();
+    Voz.falar(`Escolha um lugar para explorar!`);
+    irPara(CenaMapa);
+  }
+
+  return {
+    musica: 'tema',
+    atualizar() {
+      t++; tPasso++;
+      if (passo < 0) { if (t > 20) irPasso(0); return; }
+      if (espera > 0 && --espera === 0) {
+        if (falando) terminouFala();
+        else if (passo < PASSOS.length - 1) irPasso(passo + 1);
+      }
+      if (passo === PASSOS.length - 1 && !falando && tPasso > 600 && !lembrou) {
+        lembrou = true; Voz.falar('Toque no botão verde!');
+      }
+    },
+    desenhar(g) {
+      const W = J.W, H = J.H, G = gy();
+      desenharCenario(g, 'savana', W, H, t * 0.3);
+      // Tio Robi e Chico
+      const boca = falando && Math.floor(t / 7) % 2 === 0;
+      const acena = passo <= 0 || passo === PASSOS.length - 1;
+      const spr = acena && Math.floor(t / 18) % 2
+        ? (boca ? SPR.robi.acenandoFalando : SPR.robi.acenando)
+        : (boca ? SPR.robi.falando : SPR.robi.parado);
+      desenharSprite(g, spr, 42, G + 1, { escala: 2 });
+      const pulinho = passo === 3 ? -Math.abs(Math.sin(t / 12)) * 14 : 0;
+      desenharSprite(g, pulinho < -2 ? SPR.pular : SPR.parado, 86, G + 1 + pulinho, { escala: 2 });
+      // balãozinho de fala
+      if (falando) {
+        g.fillStyle = '#ffffff';
+        poligono(g, [58, G - 56, 70, G - 62, 62, G - 50]);
+      }
+      // quadro com a explicação em figuras
+      const bx = 116, by = 26, bw = W - bx - 8, bh = G - by - 10;
+      caixa(g, bx, by, bw, bh, '#fff8e0');
+      const cx = bx + bw / 2, cy = by + bh / 2;
+      if (passo <= 0) {
+        desenharSprite(g, SPR.robi.rosto, cx, cy + 22, { escala: 4 });
+        desenharEmoji(g, '👋', cx + 46, cy - 14 + Math.sin(t / 6) * 3, 24, { rot: Math.sin(t / 5) * 0.3 });
+      } else if (passo === 1) {
+        perdidos.forEach((e, i) => {
+          const x = bx + 26 + i * (bw - 52) / 4, y = cy + Math.sin(t / 14 + i * 1.3) * 10;
+          desenharEmoji(g, e, x, y, 22);
+          desenharEmoji(g, '❓', x + 10, y - 16, 11);
+        });
+      } else if (passo === 2 || passo === 3) {
+        const mw = bw - 12, mh = bh - 12;
+        g.drawImage(miniatura('savana', mw, mh), bx + 6, by + 6);
+        const chao = by + 6 + mh - 10;
+        if (passo === 2) {
+          [['🦁', 0.3], ['🦓', 0.7]].forEach(([e, fx], i) => {
+            const x = bx + 6 + mw * fx, y = chao - 28 + Math.sin(t / 12 + i) * 3;
+            desenharBolha(g, x, y, 17, t, 'fundo');
+            desenharEmoji(g, e, x, y, 22);
+            desenharBolha(g, x, y, 17, t, 'frente');
+            desenharEmoji(g, '✅', x + 14, y - 16, 14);
+          });
+        } else {
+          const x = bx + 6 + mw * 0.55, y = chao - 16;
+          desenharBolha(g, x, y, 15, t, 'fundo');
+          desenharEmoji(g, '🐧', x, y, 20);
+          desenharBolha(g, x, y, 15, t, 'frente');
+          desenharEmoji(g, '❌', x + 13, y - 16, 12);
+          // Chico pequeno pulando por cima do pinguim
+          const k = (t % 120) / 120;
+          const hx = bx + 16 + k * (mw - 20), hy = chao + 6 - Math.max(0, Math.sin((k - 0.3) / 0.45 * Math.PI)) * 44 * (k > 0.3 && k < 0.75 ? 1 : 0);
+          desenharSprite(g, hy < chao + 4 ? SPR.pular : SPR.correr[Math.floor(t / 6) % 2], hx, hy, {});
+          desenharEmoji(g, '👆', bx + 22, by + 24 + (Math.floor(t / 15) % 2) * 4, 18);
+        }
+      } else {
+        const pulso = 1 + Math.sin(t / 8) * 0.06;
+        const w = 70 * pulso, h = 44 * pulso;
+        botaoAtivo(g, cx - w / 2, cy - h / 2, w, h, '▶️', '#3aa655', sair);
+      }
+      // bolinhas de progresso da explicação
+      for (let i = 0; i < PASSOS.length; i++) {
+        g.fillStyle = i <= passo ? '#ffd83a' : 'rgba(0,0,0,0.35)';
+        g.fillRect(bx + bw / 2 - PASSOS.length * 4 + i * 8, by + bh + 3, 5, 5);
+      }
+      // pular a explicação (para os adultos)
+      botaoAtivo(g, W - 30, 3, 27, 20, '⏭️', '#6a6a8a', sair);
+    },
+  };
 }
 
 // =====================================================================
@@ -247,6 +366,9 @@ function CenaMapa() {
       desenharSprite(g, spr, hx, hy, { escala: 1, virar: alvo ? alvo.x < alvo.x0 : false });
       // botões
       botaoAtivo(g, 4, 4, 28, 22, '🏠', '#8a5a32', () => irPara(CenaTitulo));
+      botao(g, 36, 4, 28, 22, null, '#3a6ab0');
+      desenharSprite(g, SPR.robi.rosto, 50, 22, {});
+      J.botoes.push({ x: 36, y: 4, w: 28, h: 22, acao: () => irPara(CenaTioRobi) });
       botaoAtivo(g, W - 64, 4, 28, 22, '📖', '#c0504a', () => irPara(CenaAlbum));
       botaoAtivo(g, W - 32, 4, 28, 22, Som.musicaLigada ? '🎵' : '🔇', '#6a4ab0', () => {
         Som.setMusicaLigada(!Som.musicaLigada); Save.d.musica = Som.musicaLigada; Save.salvar();
@@ -948,34 +1070,47 @@ function pedirTelaCheia() {
 
 function configurarToque() {
   const c = J.canvas;
+  const dentro = (b, x, y) => x >= b.x - 3 && x <= b.x + b.w + 3 && y >= b.y - 3 && y <= b.y + b.h + 3;
   c.addEventListener('pointerdown', e => {
     e.preventDefault();
     Som.iniciar();
     pedirTelaCheia();
     if (J.transicao) return;
     const { x, y } = coordenadas(e);
+    try { c.setPointerCapture(e.pointerId); } catch (_) { /* ok */ }
+    // botões agem ao soltar o dedo; aqui só guardamos qual foi apertado
     for (let i = J.botoes.length - 1; i >= 0; i--) {
-      const b = J.botoes[i];
-      if (x >= b.x - 3 && x <= b.x + b.w + 3 && y >= b.y - 3 && y <= b.y + b.h + 3) {
-        Som.tocar('clique'); b.acao(); return;
-      }
+      if (dentro(J.botoes[i], x, y)) { J.apertado = Object.assign({ id: e.pointerId }, J.botoes[i]); return; }
     }
     if (J.pausado || !J.cena) return;
+    // o pulo responde já no encostar do dedo
     if (J.cena.toque) J.cena.toque(x, y, e.pointerId);
-    try { c.setPointerCapture(e.pointerId); } catch (_) { /* ok */ }
   });
   c.addEventListener('pointermove', e => {
     if (!J.cena || !J.cena.arrastar || J.pausado) return;
     const { x, y } = coordenadas(e);
     J.cena.arrastar(x, y, e.pointerId);
   });
-  const soltar = e => {
-    if (!J.cena || !J.cena.soltar) return;
+  const soltar = (e, cancelado) => {
     const { x, y } = coordenadas(e);
-    J.cena.soltar(x, y, e.pointerId);
+    const b = J.apertado;
+    if (b && b.id === e.pointerId) {
+      J.apertado = null;
+      if (!cancelado && !J.transicao && dentro(b, x, y)) { Som.iniciar(); Som.tocar('clique'); b.acao(); }
+      Voz.desbloquear();
+      return;
+    }
+    Som.iniciar();
+    if (!cancelado && !J.transicao && !J.pausado && J.cena && J.cena.soltar) J.cena.soltar(x, y, e.pointerId);
+    else if (cancelado && J.cena && J.cena.soltar) J.cena.soltar(x, y, e.pointerId);
+    Voz.desbloquear();
   };
-  c.addEventListener('pointerup', soltar);
-  c.addEventListener('pointercancel', soltar);
+  c.addEventListener('pointerup', e => soltar(e, false));
+  c.addEventListener('pointercancel', e => soltar(e, true));
+  // garantia extra para o iPad: o primeiro fim de toque libera som e voz
+  const liberar = () => { Som.iniciar(); Voz.desbloquear(); };
+  document.addEventListener('touchend', liberar, { once: true });
+  document.addEventListener('click', liberar, { once: true });
   // teclado (para testar no computador): espaço/seta = pular
   window.addEventListener('keydown', e => {
     if ([' ', 'ArrowUp', 'Enter'].includes(e.key) && J.cena && J.cena.toque && !J.pausado) {
@@ -1010,11 +1145,17 @@ function iniciarJogo() {
   trocarCena(CenaTitulo());
   requestAnimationFrame(quadro);
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    // quando uma versão nova do jogo é instalada, recarrega uma vez
+    const tinhaVersao = !!navigator.serviceWorker.controller;
+    let recarregou = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (tinhaVersao && !recarregou) { recarregou = true; location.reload(); }
+    });
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 }
 
-window.__jogo = { J, Save, irPara, CenaFase, CenaChuva, CenaMapa, CenaAlbum, CenaTitulo };
+window.__jogo = { J, Save, irPara, CenaFase, CenaChuva, CenaMapa, CenaAlbum, CenaTitulo, CenaTioRobi };
 
 if (document.fonts && document.fonts.load) {
   document.fonts.load(`16px ${FONTE_PIXEL}`).catch(() => {}).finally(iniciarJogo);
