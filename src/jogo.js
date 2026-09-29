@@ -290,8 +290,8 @@ function CenaMapa() {
   const posHeroi = id => { const [x, y] = pos(id); return [x - TW / 2 - 7, y + TH / 2]; };
   let [hx, hy] = posHeroi(Save.d.ultimoNo in NOS_MAPA ? Save.d.ultimoNo : 'savana');
   let alvo = null, tremer = { id: null, t: 0 };
-  // 5 toques seguidos no rosto do Tio Robi abrem a tela de gravação (adultos)
-  const toquesRobi = { n: 0, t: 0 };
+  // botão invisível ao lado do Tio Robi: 5 toques abrem a tela de gravação (adultos)
+  const toquesGravar = { n: 0, t: 0 };
 
   function escolher(id) {
     if (alvo) return;
@@ -313,11 +313,7 @@ function CenaMapa() {
     atualizar() {
       t++;
       if (tremer.t > 0) tremer.t--;
-      // parou de tocar antes do 5º toque: só repete a explicação
-      if (toquesRobi.n > 0 && t - toquesRobi.t > 40) {
-        toquesRobi.n = 0;
-        irPara(CenaTioRobi);
-      }
+      if (toquesGravar.n > 0 && t - toquesGravar.t > 90) toquesGravar.n = 0; // parou de tocar: zera
       if (alvo) {
         alvo.t++;
         const k = Math.min(1, alvo.t / 40);
@@ -391,12 +387,12 @@ function CenaMapa() {
       botaoAtivo(g, 4, 4, 28, 22, '🏠', '#8a5a32', () => irPara(CenaTitulo));
       botao(g, 36, 4, 28, 22, null, '#3a6ab0');
       desenharSprite(g, SPR.robi.rosto, 50, 22, {});
-      // 1 toque: Tio Robi explica de novo. 5 toques seguidos: tela de gravação
-      J.botoes.push({ x: 36, y: 4, w: 28, h: 22, acao: () => {
-        toquesRobi.n++; toquesRobi.t = t;
-        if (toquesRobi.n >= 5) { toquesRobi.n = 0; Gravador.abrir(); }
+      J.botoes.push({ x: 36, y: 4, w: 28, h: 22, acao: () => irPara(CenaTioRobi) });
+      // área invisível à direita do Tio Robi: 5 toques seguidos abrem a gravação
+      J.botoes.push({ x: 70, y: 2, w: 36, h: 26, mudo: true, acao: () => {
+        toquesGravar.n++; toquesGravar.t = t;
+        if (toquesGravar.n >= 5) { toquesGravar.n = 0; Gravador.abrir(); }
       } });
-      for (let k = 0; k < toquesRobi.n; k++) { g.fillStyle = '#ffd83a'; g.fillRect(38 + k * 5, 28, 3, 3); }
       botaoAtivo(g, W - 64, 4, 28, 22, '📖', '#c0504a', () => irPara(CenaAlbum));
       botaoAtivo(g, W - 32, 4, 28, 22, Som.musicaLigada ? '🎵' : '🔇', '#6a4ab0', () => {
         Som.setMusicaLigada(!Som.musicaLigada); Save.d.musica = Som.musicaLigada; Save.salvar();
@@ -1125,7 +1121,7 @@ function configurarToque() {
     if (b && b.id === e.pointerId) {
       J.apertado = null;
       if (!cancelado && !J.transicao && dentro(b, x, y)) {
-        Som.iniciar(); Som.tocar('clique');
+        Som.iniciar(); if (!b.mudo) Som.tocar('clique');
         b.acao();
       }
       Voz.desbloquear();

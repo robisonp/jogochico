@@ -54,7 +54,7 @@ Depois disso ele abre em tela cheia, deitado, como um app, e funciona offline.
 As 5 falas da explicação inicial podem ser gravadas com a voz de verdade do Tio Robi, dentro do próprio jogo:
 
 1. Abra o jogo e vá até o **mapa**.
-2. Toque **5 vezes seguidas** no botão azul com o rosto do Tio Robi (canto de cima, à esquerda). Bolinhas amarelas embaixo do botão contam os toques. Um toque só repete a explicação; os 5 toques abrem a tela de gravação, escondida da criança.
+2. Toque **5 vezes seguidas no espaço vazio logo à direita** do botão azul com o rosto do Tio Robi (canto de cima, à esquerda). É um botão invisível, escondido da criança; ele abre a tela de gravação. O botão do Tio Robi em si continua abrindo a explicação.
 3. Em cada frase: **● Gravar** → leia a frase → **■ Parar**. Ouça com **▶ Ouvir** e grave de novo se quiser (cada gravação vai até 15 segundos).
 4. Toque em **▶ Ver a abertura** para conferir.
 

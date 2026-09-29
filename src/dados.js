@@ -63,7 +63,7 @@ function animaisDoBioma(bioma) { return ANIMAIS.filter(a => a.bioma === bioma); 
 function animalPorId(id) { return ANIMAIS.find(a => a.id === id); }
 
 // Falas da abertura, na voz do Tio Robi. Podem ser gravadas com a voz de
-// verdade: no mapa, toque 5 vezes seguidas no rosto do Tio Robi.
+// verdade: no mapa, toque 5 vezes seguidas logo à direita do botão do Tio Robi.
 const FALAS_ROBI = [
   { id: 'robi-1', texto: `Oi, ${NOME_HEROI}! Eu sou o Tio Robi!` },
   { id: 'robi-2', texto: 'Os animais se perderam, e você vai me ajudar a levar cada um para casa!' },
