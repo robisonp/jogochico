@@ -62,6 +62,16 @@ let ANIMAIS = TODOS_ANIMAIS.slice();
 function animaisDoBioma(bioma) { return ANIMAIS.filter(a => a.bioma === bioma); }
 function animalPorId(id) { return ANIMAIS.find(a => a.id === id); }
 
+// Falas da abertura, na voz do Tio Robi. Podem ser gravadas com a voz de
+// verdade: no mapa, segure o botão com o rosto do Tio Robi por 2 segundos.
+const FALAS_ROBI = [
+  { id: 'robi-1', texto: `Oi, ${NOME_HEROI}! Eu sou o Tio Robi!` },
+  { id: 'robi-2', texto: 'Os animais se perderam, e você vai me ajudar a levar cada um para casa!' },
+  { id: 'robi-3', texto: 'Em cada ambiente, você tem que pegar os animais que moram lá.' },
+  { id: 'robi-4', texto: 'Se o bicho não mora ali, pule por cima! Para pular, é só tocar na tela.' },
+  { id: 'robi-5', texto: 'Vamos lá? Toque no botão verde!' },
+];
+
 // Primeira letra maiúscula (para as falas)
 function maiuscula(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 // "O pinguim mora no gelo."

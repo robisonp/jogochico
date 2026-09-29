@@ -33,14 +33,45 @@
   #girar span { display: inline-block; animation: girar 2s ease-in-out infinite; }
   @keyframes girar { 0%, 30% { transform: rotate(0deg); } 60%, 100% { transform: rotate(-90deg); } }
   @media (orientation: portrait) and (max-width: 1100px) { #girar { display: flex; } }
+  /* tela de gravação da voz do Tio Robi (para adultos) */
+  #gravador {
+    position: fixed; inset: 0; z-index: 3; background: rgba(10, 8, 30, 0.88);
+    overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y;
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #1a1226;
+    -webkit-user-select: none; user-select: none;
+  }
+  #gravador[hidden] { display: none; }
+  .g-caixa { max-width: 760px; margin: 16px auto; padding: 16px 20px; background: #fff8e0; border: 3px solid #1a1226; border-radius: 6px; }
+  .g-caixa h2 { margin: 0 0 6px; font-size: 22px; }
+  .g-caixa p { margin: 0 0 12px; }
+  .g-erro { color: #b02a2a; font-weight: 600; }
+  .g-lista { margin: 0; padding: 0 0 0 24px; }
+  .g-linha { margin: 0 0 12px; padding: 10px 12px; background: #ffffff; border: 2px solid #d8cfa8; border-radius: 6px; }
+  .g-linha.g-ok { border-color: #3aa655; }
+  .g-linha.g-gravando { border-color: #d03a3a; background: #fff0f0; }
+  .g-frase { font-size: 19px; font-weight: 600; }
+  .g-estado { font-size: 14px; color: #5a5670; margin: 2px 0 8px; }
+  .g-ok .g-estado { color: #2d7a3b; }
+  .g-botoes, .g-rodape { display: flex; flex-wrap: wrap; gap: 8px; }
+  .g-rodape { margin-top: 8px; }
+  .g-btn {
+    font: 600 16px system-ui, -apple-system, sans-serif; min-height: 44px; padding: 8px 14px;
+    border: 2px solid #1a1226; border-radius: 6px; background: #ece4c8; color: #1a1226; cursor: pointer;
+  }
+  .g-btn:disabled { opacity: 0.4; }
+  .g-rec { background: #d03a3a; color: #ffffff; }
+  .g-verde { background: #3aa655; color: #ffffff; }
+  .g-apagar { background: #ffffff; }
 </style>
 </head>
 <body>
 <canvas id="tela" width="320" height="180"></canvas>
 <div id="girar" aria-label="Gire o tablet"><span>📱</span></div>
+<div id="gravador" hidden></div>
 <script src="src/dados.js"></script>
 <script src="src/audio.js"></script>
 <script src="src/graficos.js"></script>
+<script src="src/gravacoes.js"></script>
 <script src="src/jogo.js"></script>
 </body>
 </html>

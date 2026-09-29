@@ -1,9 +1,9 @@
 // Service worker: guarda o jogo no tablet para funcionar sem internet.
 // Ao mudar qualquer arquivo, aumente a versão abaixo.
-const VERSAO = 'chico-v2';
+const VERSAO = 'chico-v3';
 const ARQUIVOS = [
   './', 'index.html', 'manifest.webmanifest',
-  'src/dados.js', 'src/audio.js', 'src/graficos.js', 'src/jogo.js',
+  'src/dados.js', 'src/audio.js', 'src/graficos.js', 'src/gravacoes.js', 'src/jogo.js',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
 ];
 

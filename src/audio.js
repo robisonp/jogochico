@@ -10,7 +10,8 @@ const Som = (() => {
   let musicaDesejada = null, musicaAtual = null;
   let passo = 0, proximoTempo = 0, relogio = null;
 
-  function iniciar() {
+  // cria o contexto de áudio (sem tocar nada); no iPad ele só "acorda" num toque
+  function criar() {
     if (!ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
@@ -23,6 +24,11 @@ const Som = (() => {
       const d = ruido.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     }
+    return ctx;
+  }
+
+  function iniciar() {
+    if (!criar()) return;
     if (ctx.state === 'suspended') ctx.resume();
     if (musicaDesejada && musicaAtual !== musicaDesejada) comecarMusica(musicaDesejada);
   }
@@ -169,8 +175,61 @@ const Som = (() => {
   }
   function pararRelogio() { if (relogio) clearInterval(relogio); relogio = null; musicaAtual = null; }
 
+  function abafar(sim) {
+    if (!busMusica || !musicaLigada) return;
+    busMusica.gain.setTargetAtTime(sim ? 0.1 : 0.32, ctx.currentTime, 0.08);
+  }
+
+  // ------------------- voz gravada (Tio Robi) -------------------
+  let vozAtual = null;
+  function decodificar(arrayBuffer) {
+    if (!criar()) return Promise.reject(new Error('sem áudio'));
+    return new Promise((ok, erro) => {
+      const p = ctx.decodeAudioData(arrayBuffer, ok, erro);
+      if (p && p.then) p.then(ok, erro);
+    });
+  }
+  // corta o silêncio do começo e do fim da gravação
+  function aparar(buf) {
+    if (buf._aparo) return buf._aparo;
+    const d = buf.getChannelData(0), sr = buf.sampleRate;
+    let pico = 0;
+    for (let i = 0; i < d.length; i++) pico = Math.max(pico, Math.abs(d[i]));
+    const lim = Math.max(0.015, pico * 0.06);
+    let a = 0, b = d.length - 1;
+    while (a < d.length && Math.abs(d[a]) < lim) a++;
+    while (b > a && Math.abs(d[b]) < lim) b--;
+    const ini = Math.max(0, a / sr - 0.08), fim = Math.min(buf.duration, b / sr + 0.15);
+    buf._aparo = fim > ini ? [ini, fim] : [0, buf.duration];
+    return buf._aparo;
+  }
+  function pararVoz() {
+    if (!vozAtual) return;
+    const s = vozAtual; vozAtual = null;
+    try { s.stop(); } catch (e) { /* já parou */ }
+    abafar(false);
+  }
+  // toca a gravação; devolve a duração em segundos
+  function tocarVoz(buf, aoTerminar) {
+    pararVoz();
+    if (!criar()) return 0;
+    const [ini, fim] = aparar(buf);
+    const s = ctx.createBufferSource(), g = ctx.createGain();
+    s.buffer = buf; g.gain.value = 1.3;
+    s.connect(g); g.connect(mestre);
+    s.onended = () => {
+      if (vozAtual !== s) return;
+      vozAtual = null; abafar(false);
+      if (aoTerminar) aoTerminar();
+    };
+    abafar(true);
+    s.start(0, ini, fim - ini);
+    vozAtual = s;
+    return fim - ini;
+  }
+
   return {
-    iniciar,
+    iniciar, decodificar, tocarVoz, pararVoz,
     tocar(nome, ...args) { if (efeitos[nome]) efeitos[nome](...args); },
     musica(nome) {
       musicaDesejada = nome;
@@ -185,10 +244,7 @@ const Som = (() => {
       if (busMusica) busMusica.gain.setTargetAtTime(v ? 0.32 : 0, ctx.currentTime, 0.05);
     },
     // abaixa a música enquanto a voz fala
-    abafar(sim) {
-      if (!busMusica || !musicaLigada) return;
-      busMusica.gain.setTargetAtTime(sim ? 0.1 : 0.32, ctx.currentTime, 0.08);
-    },
+    abafar,
     get musicaLigada() { return musicaLigada; },
     MUSICAS,
   };
@@ -251,7 +307,7 @@ const Voz = (() => {
         speechSynthesis.speak(u);
       } catch (e) { /* ignora */ }
     },
-    calar() { if (ok) speechSynthesis.cancel(); },
+    calar() { Som.pararVoz(); if (ok) speechSynthesis.cancel(); },
     get masculina() { return masculina; },
     get nomeVoz() { return voz ? voz.name : null; },
   };

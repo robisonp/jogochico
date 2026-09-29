@@ -49,6 +49,21 @@ Depois disso ele abre em tela cheia, deitado, como um app, e funciona offline.
 >
 > A voz só começa a funcionar depois do primeiro toque na tela: é uma regra do navegador.
 
+## Gravar a voz do Tio Robi
+
+As 5 falas da explicação inicial podem ser gravadas com a voz de verdade do Tio Robi, dentro do próprio jogo:
+
+1. Abra o jogo e vá até o **mapa**.
+2. **Segure por 2 segundos** o botão azul com o rosto do Tio Robi (canto de cima, à esquerda). Um toque rápido só repete a explicação; segurar abre a tela de gravação, escondida da criança.
+3. Em cada frase: **● Gravar** → leia a frase → **■ Parar**. Ouça com **▶ Ouvir** e grave de novo se quiser (cada gravação vai até 15 segundos).
+4. Toque em **▶ Ver a abertura** para conferir.
+
+- **Onde fica salvo:** as gravações ficam salvas **no aparelho em que foram feitas**, então grave no próprio tablet do Chico. Frase sem gravação continua com a voz do tablet.
+- **Microfone:** o navegador vai pedir permissão para usar o microfone; é preciso abrir o jogo pelo link `https://` do GitHub Pages.
+- **Outro jeito de abrir:** o endereço do jogo com `?gravar` no final (ex.: `https://robisonp.github.io/jogochico/?gravar`) também abre a tela de gravação.
+
+**Para valer em qualquer tablet:** na tela de gravação, toque em **⬇ Baixar** em cada frase. Depois, no GitHub, crie a pasta `audio/robi/` e envie os arquivos (Add file → Upload files) com os nomes `robi-1.m4a` … `robi-5.m4a`, na ordem das frases. O jogo usa primeiro o que foi gravado no aparelho e, se não houver, os arquivos do site. Grave num iPad/iPhone se o Chico usa iPad: o formato `.m4a` toca em todos os aparelhos.
+
 ## Testar no computador
 
 Qualquer servidor estático serve, por exemplo:
@@ -81,6 +96,7 @@ sw.js                 cache para funcionar offline
 src/dados.js          ambientes, animais e nome do herói
 src/audio.js          músicas chiptune, efeitos e narração por voz
 src/graficos.js       pixel art, cenários com parallax, botões
+src/gravacoes.js      gravação e reprodução da voz do Tio Robi
 src/jogo.js           loop, toque, cenas (título, Tio Robi, mapa, fases, chuva, álbum)
 icons/                ícones do app
 ```
@@ -89,7 +105,7 @@ Sem dependências e sem etapa de build: é HTML, Canvas e JavaScript puro.
 
 ## Ideias para próximas versões
 
-- **Voz gravada do Tio Robi**: trocar a voz sintetizada por gravações de verdade das falas.
+- **Mais falas gravadas**: gravar também os nomes dos bichos e as frases do jogo, para a voz ser 100% do Tio Robi.
 
 - **Exploração estilo Zelda**: andar pela ilha e encontrar bichos perdidos que pedem ajuda para voltar para casa.
 - **"Quem sou eu?"**: a voz dá pistas ("tenho pescoço comprido e moro na savana") e ele escolhe o bicho.

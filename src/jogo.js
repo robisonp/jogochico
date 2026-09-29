@@ -146,23 +146,36 @@ function CenaTitulo() {
 //  CENA: TIO ROBI EXPLICA O JOGO
 // =====================================================================
 function CenaTioRobi() {
-  const PASSOS = [
-    `Oi, ${NOME_HEROI}! Eu sou o Tio Robi!`,
-    'Os animais se perderam, e você vai me ajudar a levar cada um para casa!',
-    'Em cada ambiente, você tem que pegar os animais que moram lá.',
-    'Se o bicho não mora ali, pule por cima! Para pular, é só tocar na tela.',
-    'Vamos lá? Toque no botão verde!',
-  ];
+  const PASSOS = FALAS_ROBI;
+  Gravacoes.preparar(); // decodifica as gravações antes de precisar
   let t = 0, passo = -1, tPasso = 0, falando = false, espera = 0, token = 0, lembrou = false;
   const perdidos = ['🦁', '🐧', '🐒', '🐬', '🐫'];
 
   function irPasso(n) {
     passo = n; tPasso = 0; falando = true; espera = 0;
     const meu = ++token;
-    const texto = PASSOS[n];
-    const teveVoz = Voz.falar(texto, { aoTerminar: () => { if (meu === token) terminouFala(); } });
-    // reserva: se a voz não avisar que terminou, segue sozinho
-    espera = (teveVoz ? texto.length * 6 + 90 : texto.length * 4 + 40);
+    const { id, texto } = PASSOS[n];
+    const aoTerminar = () => { if (meu === token) terminouFala(); };
+    const sintetizada = () => {
+      const teveVoz = Voz.falar(texto, { aoTerminar });
+      // reserva: se a voz não avisar que terminou, segue sozinho
+      espera = (teveVoz ? texto.length * 6 + 90 : texto.length * 4 + 40);
+    };
+    if (!Gravacoes.tem(id)) { sintetizada(); return; }
+    // voz gravada de verdade pelo Tio Robi
+    Voz.calar();
+    espera = 600;
+    Gravacoes.buffer(id).then(buf => {
+      if (meu !== token) return;
+      if (!buf) { sintetizada(); return; }
+      const dur = Som.tocarVoz(buf, aoTerminar);
+      espera = Math.ceil(dur * 60) + 120;
+    });
+  }
+  function repetirUltima() {
+    const ultima = PASSOS[PASSOS.length - 1];
+    if (!Gravacoes.tem(ultima.id)) { Voz.falar('Toque no botão verde!'); return; }
+    Gravacoes.buffer(ultima.id).then(buf => { if (buf) Som.tocarVoz(buf); });
   }
   function terminouFala() {
     if (!falando) return;
@@ -170,8 +183,11 @@ function CenaTioRobi() {
     espera = 35; // respiro antes do próximo passo
   }
   function sair() {
+    token++;
     Save.d.viuTioRobi = true; Save.salvar();
-    Voz.falar(`Escolha um lugar para explorar!`);
+    Voz.calar();
+    // se a abertura foi com a voz gravada, não emenda com a voz do tablet
+    if (!Gravacoes.tem(PASSOS[PASSOS.length - 1].id)) Voz.falar('Escolha um lugar para explorar!');
     irPara(CenaMapa);
   }
 
@@ -185,7 +201,7 @@ function CenaTioRobi() {
         else if (passo < PASSOS.length - 1) irPasso(passo + 1);
       }
       if (passo === PASSOS.length - 1 && !falando && tPasso > 600 && !lembrou) {
-        lembrou = true; Voz.falar('Toque no botão verde!');
+        lembrou = true; repetirUltima();
       }
     },
     desenhar(g) {
@@ -368,7 +384,8 @@ function CenaMapa() {
       botaoAtivo(g, 4, 4, 28, 22, '🏠', '#8a5a32', () => irPara(CenaTitulo));
       botao(g, 36, 4, 28, 22, null, '#3a6ab0');
       desenharSprite(g, SPR.robi.rosto, 50, 22, {});
-      J.botoes.push({ x: 36, y: 4, w: 28, h: 22, acao: () => irPara(CenaTioRobi) });
+      // toque: Tio Robi explica de novo. Segurar 2 s: tela de gravação (adultos)
+      J.botoes.push({ x: 36, y: 4, w: 28, h: 22, acao: seg => (seg >= 1.5 ? Gravador.abrir() : irPara(CenaTioRobi)) });
       botaoAtivo(g, W - 64, 4, 28, 22, '📖', '#c0504a', () => irPara(CenaAlbum));
       botaoAtivo(g, W - 32, 4, 28, 22, Som.musicaLigada ? '🎵' : '🔇', '#6a4ab0', () => {
         Som.setMusicaLigada(!Som.musicaLigada); Save.d.musica = Som.musicaLigada; Save.salvar();
@@ -1080,7 +1097,7 @@ function configurarToque() {
     try { c.setPointerCapture(e.pointerId); } catch (_) { /* ok */ }
     // botões agem ao soltar o dedo; aqui só guardamos qual foi apertado
     for (let i = J.botoes.length - 1; i >= 0; i--) {
-      if (dentro(J.botoes[i], x, y)) { J.apertado = Object.assign({ id: e.pointerId }, J.botoes[i]); return; }
+      if (dentro(J.botoes[i], x, y)) { J.apertado = Object.assign({ id: e.pointerId, t0: performance.now() }, J.botoes[i]); return; }
     }
     if (J.pausado || !J.cena) return;
     // o pulo responde já no encostar do dedo
@@ -1096,7 +1113,10 @@ function configurarToque() {
     const b = J.apertado;
     if (b && b.id === e.pointerId) {
       J.apertado = null;
-      if (!cancelado && !J.transicao && dentro(b, x, y)) { Som.iniciar(); Som.tocar('clique'); b.acao(); }
+      if (!cancelado && !J.transicao && dentro(b, x, y)) {
+        Som.iniciar(); Som.tocar('clique');
+        b.acao((performance.now() - b.t0) / 1000); // segundos que o dedo ficou apertado
+      }
       Voz.desbloquear();
       return;
     }
@@ -1144,6 +1164,7 @@ function iniciarJogo() {
   configurarToque();
   trocarCena(CenaTitulo());
   requestAnimationFrame(quadro);
+  Gravacoes.carregar().then(() => { if (/[?&]gravar\b/.test(location.search)) Gravador.abrir(); });
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     // quando uma versão nova do jogo é instalada, recarrega uma vez
     const tinhaVersao = !!navigator.serviceWorker.controller;
