@@ -199,7 +199,7 @@ const Som = (() => {
     let a = 0, b = d.length - 1;
     while (a < d.length && Math.abs(d[a]) < lim) a++;
     while (b > a && Math.abs(d[b]) < lim) b--;
-    const ini = Math.max(0, a / sr - 0.08), fim = Math.min(buf.duration, b / sr + 0.15);
+    const ini = Math.max(0, a / sr - 0.12), fim = Math.min(buf.duration, b / sr + 0.3);
     buf._aparo = fim > ini ? [ini, fim] : [0, buf.duration];
     return buf._aparo;
   }
@@ -229,7 +229,7 @@ const Som = (() => {
   }
 
   return {
-    iniciar, decodificar, tocarVoz, pararVoz,
+    iniciar, decodificar, tocarVoz, pararVoz, aparar,
     tocar(nome, ...args) { if (efeitos[nome]) efeitos[nome](...args); },
     musica(nome) {
       musicaDesejada = nome;

@@ -7,7 +7,7 @@
 
 const Gravacoes = (() => {
   const BANCO = 'chico-voz', LOJA = 'falas';
-  const EXTENSOES = ['m4a', 'mp3', 'webm', 'ogg'];
+  const EXTENSOES = ['wav', 'm4a', 'mp3', 'webm', 'ogg'];
   const itens = new Map();    // id -> { blob, origem: 'aparelho' | 'site' }
   const buffers = new Map();  // id -> AudioBuffer já decodificado
   let db = null;
@@ -80,17 +80,51 @@ const Gravacoes = (() => {
     } catch (e) { return null; }
   }
 
+  // Converte a gravação para WAV (toca em qualquer aparelho, inclusive iPad):
+  // corta o silêncio, deixa em mono 22 kHz e ajusta o volume.
+  async function paraWav(buf, taxa = 22050) {
+    const [ini, fim] = Som.aparar(buf);
+    const n = Math.max(1, Math.ceil((fim - ini) * taxa));
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    const off = new OAC(1, n, taxa);
+    const fonte = off.createBufferSource();
+    fonte.buffer = buf;
+    fonte.connect(off.destination);
+    fonte.start(0, ini, fim - ini);
+    const r = await new Promise((ok, erro) => {
+      off.oncomplete = e => ok(e.renderedBuffer);
+      const p = off.startRendering();
+      if (p && p.then) p.then(ok, erro);
+    });
+    const d = r.getChannelData(0);
+    let pico = 0;
+    for (let i = 0; i < d.length; i++) pico = Math.max(pico, Math.abs(d[i]));
+    const ganho = pico > 0 ? Math.min(4, 0.9 / pico) : 1;
+    const dados = new DataView(new ArrayBuffer(44 + d.length * 2));
+    const txt = (o, s) => { for (let i = 0; i < s.length; i++) dados.setUint8(o + i, s.charCodeAt(i)); };
+    txt(0, 'RIFF'); dados.setUint32(4, 36 + d.length * 2, true); txt(8, 'WAVE');
+    txt(12, 'fmt '); dados.setUint32(16, 16, true); dados.setUint16(20, 1, true); dados.setUint16(22, 1, true);
+    dados.setUint32(24, taxa, true); dados.setUint32(28, taxa * 2, true); dados.setUint16(32, 2, true); dados.setUint16(34, 16, true);
+    txt(36, 'data'); dados.setUint32(40, d.length * 2, true);
+    for (let i = 0; i < d.length; i++) {
+      const v = Math.max(-1, Math.min(1, d[i] * ganho));
+      dados.setInt16(44 + i * 2, v < 0 ? v * 0x8000 : v * 0x7FFF, true);
+    }
+    return new Blob([dados.buffer], { type: 'audio/wav' });
+  }
+
   function extensao(blob) {
     const t = (blob && blob.type) || '';
     if (/mp4|aac|m4a/.test(t)) return 'm4a';
     if (/webm/.test(t)) return 'webm';
     if (/ogg/.test(t)) return 'ogg';
     if (/mpeg|mp3/.test(t)) return 'mp3';
+    if (/wav/.test(t)) return 'wav';
     return 'm4a';
   }
 
   return {
-    carregar, salvar, apagar, buffer, extensao,
+    carregar, salvar, apagar, buffer, extensao, paraWav,
     tem: id => itens.has(id),
     item: id => itens.get(id),
     preparar() { FALAS_ROBI.forEach(f => { if (itens.has(f.id)) buffer(f.id); }); },
@@ -208,10 +242,16 @@ const Gravador = (() => {
   }
   function pararOuvir() { if (ouvindo) { ouvindo.pause(); ouvindo = null; } }
 
-  function baixar(id) {
+  // baixa em WAV, pronto para subir no GitHub em audio/robi/
+  async function baixar(id) {
     const it = Gravacoes.item(id);
     if (!it) return;
-    const a = el('a', { href: URL.createObjectURL(it.blob), download: `${id}.${Gravacoes.extensao(it.blob)}` });
+    let blob = it.blob;
+    try {
+      const buf = await Gravacoes.buffer(id);
+      if (buf) blob = await Gravacoes.paraWav(buf);
+    } catch (e) { /* se não converter, baixa o original */ }
+    const a = el('a', { href: URL.createObjectURL(blob), download: `${id}.${Gravacoes.extensao(blob)}` });
     document.body.appendChild(a); a.click(); a.remove();
   }
 

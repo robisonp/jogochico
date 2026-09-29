@@ -62,7 +62,9 @@ As 5 falas da explicação inicial podem ser gravadas com a voz de verdade do Ti
 - **Microfone:** o navegador vai pedir permissão para usar o microfone; é preciso abrir o jogo pelo link `https://` do GitHub Pages.
 - **Outro jeito de abrir:** o endereço do jogo com `?gravar` no final (ex.: `https://robisonp.github.io/jogochico/?gravar`) também abre a tela de gravação.
 
-**Para valer em qualquer tablet:** na tela de gravação, toque em **⬇ Baixar** em cada frase. Depois, no GitHub, crie a pasta `audio/robi/` e envie os arquivos (Add file → Upload files) com os nomes `robi-1.m4a` … `robi-5.m4a`, na ordem das frases. O jogo usa primeiro o que foi gravado no aparelho e, se não houver, os arquivos do site. Grave num iPad/iPhone se o Chico usa iPad: o formato `.m4a` toca em todos os aparelhos.
+**Para valer em qualquer tablet:** na tela de gravação, toque em **⬇ Baixar** em cada frase: o jogo já entrega o arquivo em WAV (`robi-1.wav` … `robi-5.wav`), que toca em qualquer aparelho, inclusive iPad. Depois, no GitHub, abra a pasta [`audio/robi/`](audio/robi/) e envie os arquivos por **Add file → Upload files**, mantendo os nomes, para substituir os que já estão lá. O jogo usa primeiro o que foi gravado no próprio aparelho e, se não houver, os arquivos do site.
+
+> Atenção: os arquivos precisam ficar **dentro de `audio/robi/`**. Arquivos soltos na raiz do repositório não são encontrados. Os áudios originais da primeira gravação estão guardados em `audio/robi/originais/`.
 
 ## Testar no computador
 
@@ -99,6 +101,7 @@ src/graficos.js       pixel art, cenários com parallax, botões
 src/gravacoes.js      gravação e reprodução da voz do Tio Robi
 src/jogo.js           loop, toque, cenas (título, Tio Robi, mapa, fases, chuva, álbum)
 icons/                ícones do app
+audio/robi/           gravações das falas do Tio Robi (robi-1.wav … robi-5.wav)
 ```
 
 Sem dependências e sem etapa de build: é HTML, Canvas e JavaScript puro.
